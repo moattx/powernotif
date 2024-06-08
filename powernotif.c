@@ -2,6 +2,7 @@
  *people can only save themselves -- Nodius* 
  */
 
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,9 +34,9 @@ static void
 notifysend (char *str)
 {
   char command[80];
-  snprintf (command, 80, "notify-send --urgency=critical '%s' '%s'",
+  (void) snprintf (command, 80, "notify-send --urgency=critical '%s' '%s'",
 	    __progname, str);
-  system (command);
+  (void) system (command);
 }
 
 static unsigned int
@@ -102,12 +103,47 @@ daemonize ()
 }
 
 
+static void usage(void){
+    fprintf(stderr, "%s [-p power] [-t timeout] [-h] \n", __progname);
+    exit(EXIT_FAILURE);
+}
+
 void update (power * p);
 void readfile (const char *path, char *rstr, size_t size);
 
 int
-main ()
+main (int argc, char **argv)
 {
+
+        unsigned int cap = 20;
+        unsigned int timeout = 1;
+        // p - power capacity
+        // t - timeout
+        int ch;
+	while ((ch = getopt(argc, argv, "p:t:h")) != -1) {
+		switch (ch) {
+		case 'p':
+			cap = str2unsigned(optarg);
+			break;
+		case 't':
+			timeout = str2unsigned(optarg);
+			break;
+                case 'h':
+                    usage();
+                    break;
+                case '?':
+		default:
+			usage();
+			break;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+        if (argc == 0){
+            usage();
+        }
+
 
   // Daemon time
   if (daemonize ())
@@ -119,11 +155,11 @@ main ()
   for (;;)
     {
       update (&pow);
-      if (pow.cap < 20 && compare (pow.status, "Discharging") == true)
+      if (pow.cap <= cap && compare (pow.status, "Discharging") == true)
 	{
 	  notifysend ("Plug in now!");
 	}
-      sleep (1);
+      sleep (timeout);
     }
 
   return EXIT_SUCCESS;
