@@ -138,11 +138,11 @@ main (int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-        if (argc == 0){
-            usage();
-        }
+	//argc -= optind;
+	//argv += optind;
+        //if (argc == 1){
+        //    usage();
+        //}
 
 
   // Daemon time
